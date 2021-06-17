@@ -1,0 +1,58 @@
+﻿@model IEnumerable<_01_BlogAlkemy.Models.ViewModel.PostGetAllModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h4>Publicaciones</h4>
+<p>
+    <a class="btn btn-primary" asp-action="Create">Crear Nuevo</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            @*<th>
+                Id
+            </th>*@
+            <th>
+                Titulo
+            </th>
+            @*<th>
+                Imagen
+            </th>
+            <th>
+                Fecha de Creación
+            </th>*@
+            <th>
+                Categoria
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            @*<td>
+                @Html.DisplayFor(modelItem => item.IdPost)
+            </td>*@
+            <td>
+                @Html.DisplayFor(modelItem => item.Title)
+            </td>
+            @*<td>
+                @Html.DisplayFor(modelItem => item.Image)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreationDate)
+            </td>*@
+            <td>
+                @Html.DisplayFor(modelItem => item.Category.Name)
+            </td>
+            <td>
+                <a class="btn-sm btn-info" asp-action="Details" asp-route-id="@item.IdPost">Detalle</a>
+                <a class="btn-sm btn-warning" asp-action="Edit" asp-route-id="@item.IdPost">Editar</a>
+                <a class="btn-sm btn-danger" asp-action="Delete" asp-route-id="@item.IdPost">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>
