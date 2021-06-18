@@ -9,6 +9,7 @@ using _01_BlogAlkemy.Models;
 using Microsoft.AspNetCore.Hosting;
 using _01_BlogAlkemy.Models.ViewModel;
 using Microsoft.AspNetCore.Http;
+using _01_BlogAlkemy.Helpers;
 
 namespace _01_BlogAlkemy.Controllers
 {
@@ -24,10 +25,11 @@ namespace _01_BlogAlkemy.Controllers
         }
 
         // GET: Posts
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string filtrar)
         {
             var dbBlogContext = _context.Post.Include(p => p.Category);
-            dbBlogContext.OrderByDescending(x => x.CreationDate);
+
+            dbBlogContext.OrderByDescending(x => x.CreationDate).ToList();
 
             var posts = dbBlogContext.Select(x=> new PostGetAllModel
             {
@@ -37,6 +39,11 @@ namespace _01_BlogAlkemy.Controllers
                 Category= x.Category,
                 CreationDate = x.CreationDate
             });
+
+            if (filtrar != null)
+            {
+                posts = posts.Where(x => x.Title.Contains(filtrar));
+            }
 
             return View(await posts.ToListAsync());
         }
@@ -52,6 +59,7 @@ namespace _01_BlogAlkemy.Controllers
             var post = await _context.Post
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(m => m.IdPost == id);
+
             if (post == null)
             {
                 return NotFound();
@@ -72,31 +80,29 @@ namespace _01_BlogAlkemy.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("IdPost,IdCategory,Title,Content,Image,CreationDate")] PostModel post)
+        public async Task<IActionResult> Create([Bind("IdPost,IdCategory,Title,Content,Image,CreationDate")] PostModel postmodel)
         {
             if (ModelState.IsValid)
             {
-                var postReal = new Post
+                var post = new Post
                 {
-                    IdPost = post.IdPost,
-                    IdCategory = post.IdCategory,
-                    Title = post.Title,
-                    Content = post.Content,
-                    Image = post.Image.FileName,
-                    CreationDate = post.CreationDate
+                    IdPost = postmodel.IdPost,
+                    IdCategory = postmodel.IdCategory,
+                    Title = postmodel.Title,
+                    Content = postmodel.Content,
+                    Image = postmodel.Image.FileName,
+                    CreationDate = postmodel.CreationDate
                 };
 
-                _context.Add(postReal);
+                _context.Add(post);
                 await _context.SaveChangesAsync();
 
-                var RutaImagen = System.IO.Path.Combine(_enviroment.ContentRootPath, "uploads", post.Image.FileName);
-                var file = new System.IO.FileStream(RutaImagen, System.IO.FileMode.Create);
-                file.Dispose();
+                FileStr.create(_enviroment.ContentRootPath, "wwwwroot/uploads", postmodel.Image.FileName,postmodel.Image);
 
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdCategory"] = new SelectList(_context.Category, "IdCategory", "Name", post.IdCategory);
-            return View(post);
+            ViewData["IdCategory"] = new SelectList(_context.Category, "IdCategory", "Name", postmodel.IdCategory);
+            return View(postmodel);
         }
 
         // GET: Posts/Edit/5
@@ -132,9 +138,9 @@ namespace _01_BlogAlkemy.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("IdPost,IdCategory,Title,Content,Image,CreationDate")] PostEditModel post)
+        public async Task<IActionResult> Edit(int id, [Bind("IdPost,IdCategory,Title,Content,Image,CreationDate")] PostEditModel editpost)
         {
-            if (id != post.IdPost)
+            if (id != editpost.IdPost)
             {
                 return NotFound();
             }
@@ -143,28 +149,25 @@ namespace _01_BlogAlkemy.Controllers
             {
                 try
                 {
-                    var postanterior = await _context.Post.FindAsync(id);
-                    var rutanterior = System.IO.Path.Combine(_enviroment.ContentRootPath, "uploads", postanterior.Image);
+                    var post= await _context.Post.FindAsync(id);
 
-                    postanterior.IdCategory = post.IdCategory;
-                    postanterior.Title = post.Title;
-                    postanterior.Content = post.Content;
+                    post.IdCategory = editpost.IdCategory;
+                    post.Title = editpost.Title;
+                    post.Content = editpost.Content;
 
-                    if (post.Image != null)
+                    if (editpost.Image != null)
                     {
-                        postanterior.Image = post.Image.FileName;
-                        var RutaImagen = System.IO.Path.Combine(_enviroment.ContentRootPath, "uploads", post.Image.FileName);
-                        var file = new System.IO.FileStream(RutaImagen, System.IO.FileMode.Create);
-                        file.Dispose();
-                        System.IO.File.Delete(rutanterior);
+                        FileStr.create(_enviroment.ContentRootPath, "wwwwroot/uploads", editpost.Image.FileName, editpost.Image);
+                        FileStr.delete(_enviroment.ContentRootPath, "wwwwroot/uploads", post.Image);
+                        post.Image = editpost.Image.FileName;
                     }
 
-                    _context.Update(postanterior);
+                    _context.Update(post);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!PostExists(post.IdPost))
+                    if (!PostExists(editpost.IdPost))
                     {
                         return NotFound();
                     }
@@ -175,8 +178,8 @@ namespace _01_BlogAlkemy.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["IdCategory"] = new SelectList(_context.Category, "IdCategory", "Name", post.IdCategory);
-            return View(post);
+            ViewData["IdCategory"] = new SelectList(_context.Category, "IdCategory", "Name", editpost.IdCategory);
+            return View(editpost);
         }
 
         // GET: Posts/Delete/5
@@ -206,11 +209,9 @@ namespace _01_BlogAlkemy.Controllers
             var post = await _context.Post.FindAsync(id);
             _context.Post.Remove(post);
 
-            var RutaImagen = System.IO.Path.Combine(_enviroment.ContentRootPath, "uploads", post.Image);
-
             await _context.SaveChangesAsync();
 
-            System.IO.File.Delete(RutaImagen);
+            FileStr.delete(_enviroment.ContentRootPath, "wwwwroot/uploads", post.Image);
 
             return RedirectToAction(nameof(Index));
         }

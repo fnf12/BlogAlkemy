@@ -15,7 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="uploads\" />
+    <Folder Include="wwwroot\uploads\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\uploads\argentina.jpg" />
+    <None Include="wwwroot\uploads\empanada.jpg" />
+    <None Include="wwwroot\uploads\flan.jpg" />
+    <None Include="wwwroot\uploads\los increibles.jpg" />
+    <None Include="wwwroot\uploads\messi.jpg" />
+    <None Include="wwwroot\uploads\tecno.jpg" />
   </ItemGroup>
 
 </Project>

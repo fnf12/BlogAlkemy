@@ -12,11 +12,8 @@ a {
   color: #0366d6;
 }
 
-
-.btn-primary {
-    color: #fff;
-    background-color: #1861ac;
-    border-color: #1861ac;
+.navbg {
+    background-color: #b8dfed;
 }
 
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
@@ -72,6 +69,6 @@ body {
 }
 
 .add-hover:hover {
-    background-color: #CFD8DC;
+    background-color: #cce8f2;
     border-radius: 5px;
 }
